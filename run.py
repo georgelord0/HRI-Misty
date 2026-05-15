@@ -342,6 +342,20 @@ class MistyController:
         self.change_led(0, 180, 80)
         self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
 
+    def _nod(self):
+        self.move_head(pitch=26, roll=0, yaw=0, velocity=100)
+        time.sleep(0.35)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        time.sleep(0.35)
+        self.move_head(pitch=26, roll=0, yaw=0, velocity=100)
+        time.sleep(0.35)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+
+    def acknowledge_behavior(self):
+        self.display_image(FACE_JOY)
+        self.change_led(0, 180, 80)
+        self._nod()
+
     def explain_board_behavior(self):
         self.display_image(FACE_JOY)
         self.change_led(0, 180, 80)
@@ -355,7 +369,7 @@ class MistyController:
     def final_behavior(self):
         self.display_image(FACE_DEFAULT)
         self.change_led(90, 90, 255)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self._nod()
         self.move_arms(left=80, right=80, velocity=100)
 
     def finish_shutdown_behavior(self):
@@ -471,7 +485,11 @@ def make_protocol_steps(controller, round_plans):
                         f"{prefix}Let's start Round {plan.round_number}. "
                         f"Please turn to Question {plan.round_number}."
                     ),
-                    before_speech=controller.listening_behavior,
+                    before_speech=(
+                        controller.listening_behavior
+                        if plan.round_number == 1
+                        else controller.acknowledge_behavior
+                    ),
                     operator_note="Wait until the participant has found the question.",
                 ),
                 ProtocolStep(
@@ -866,6 +884,14 @@ class WizardOfOzApp(QMainWindow):
         return self.steps[self.step_index - 1].title.endswith("Misty suggestion")
 
     def _on_head_front_touch(self):
+        if not self._is_waiting_for_answer():
+            self.head_touch_pending = True
+            return
+        threading.Thread(target=self._flash_then_advance, daemon=True).start()
+
+    def _flash_then_advance(self):
+        self.controller.change_led(255, 255, 255)
+        time.sleep(1.5)
         self.head_touch_pending = True
 
     def closeEvent(self, event):
