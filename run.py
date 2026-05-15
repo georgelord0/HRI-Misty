@@ -432,6 +432,7 @@ def make_protocol_steps(controller, round_plans):
     ]
 
     for plan in round_plans:
+        is_last_round = plan.round_number == TOTAL_ROUNDS
         steps.extend(
             [
                 ProtocolStep(
@@ -457,15 +458,18 @@ def make_protocol_steps(controller, round_plans):
                         f"Correct option is {plan.correct_option}; Misty says {plan.misty_choice}."
                     ),
                 ),
+            ]
+        )
+        if not is_last_round:
+            steps.append(
                 ProtocolStep(
                     phase="Phase 7: Pattern-Matching Task",
                     title=f"Round {plan.round_number}: acknowledge selection",
                     misty_line="Thank you. Let's move to the next question.",
                     before_speech=controller.listening_behavior,
                     operator_note="Trigger after the participant selects an answer.",
-                ),
-            ]
-        )
+                )
+            )
 
     steps.append(
         ProtocolStep(
@@ -478,8 +482,8 @@ def make_protocol_steps(controller, round_plans):
             before_speech=controller.final_behavior,
             after_speech=controller.finish_shutdown_behavior,
             operator_note=(
-                "Trigger after Round 8 is acknowledged. Misty will blank the face and turn "
-                "off the LED after the final line."
+                "Trigger after the participant selects their answer for Round 8. Misty will "
+                "blank the face and turn off the LED after the final line."
             ),
         )
     )
