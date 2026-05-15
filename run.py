@@ -54,7 +54,7 @@ WRONG_GUESSES_AFTER_EASY_ROUNDS = 3
 
 # Values are the option numbers Misty says when the protocol calls for a
 # correct suggestion. Update these if the study materials' answer key changes.
-CORRECT_OPTIONS = [4, 5, 1, 2, 6, 3, 6, 2] # NOTE: for set A
+CORRECT_OPTIONS = [3, 5, 4, 5, 1, 6, 1, 2]
 
 FACE_JOY = "e_Joy.jpg"
 FACE_THINKING = "e_Amazement.jpg"
@@ -413,7 +413,7 @@ def make_protocol_steps(controller, round_plans):
             phase="Phase 6: Misty Warm-Up",
             title="Explain task: game materials",
             misty_line=(
-                "For each round, there's a two-by-three board with one square empty. "
+                "For each round, you'll see a pattern with one piece missing. "
             ),
             before_speech=controller.listening_behavior,
             operator_note="Trigger the next step after the board explanation gesture is complete."
@@ -422,7 +422,7 @@ def make_protocol_steps(controller, round_plans):
             phase="Phase 6: Misty Warm-Up",
             title="Explain task: rules and readiness - Part 2",
             misty_line=(
-                "Your job is to pick the piece that best completes the pattern, choosing from four options. "
+                "Your job is to pick the piece that best completes the pattern from the options shown. "
                 "I'll give you my suggestion first, and then you'll make the final decision. "
                 "Ready to start?"
             ),
