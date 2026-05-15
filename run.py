@@ -542,8 +542,8 @@ class WizardOfOzApp(QMainWindow):
         self.log_timer.timeout.connect(self._poll_log_queue)
 
         self.setWindowTitle("Misty Wizard of Oz Controller")
-        self.resize(1120, 760)
-        self.setMinimumSize(920, 650)
+        self.resize(1120, 900)
+        self.setMinimumSize(920, 800)
 
         self.head_touch_pending = False
         self._new_subject_plan()
@@ -602,6 +602,35 @@ class WizardOfOzApp(QMainWindow):
             QLabel#Note, QLabel#Seed {
                 color: #45566b;
                 font-size: 14px;
+            }
+            QLabel#PanelHeader {
+                color: #6e7c8e;
+                font-size: 13px;
+                font-weight: 500;
+                padding: 2px 4px;
+            }
+            QLabel#CurrentHeader {
+                color: #2e7d32;
+                font-size: 14px;
+                font-weight: 700;
+                padding: 2px 4px;
+            }
+            QTextEdit#PanelBody {
+                background: #f9fbfd;
+                color: #46576b;
+                border: 1px solid #d7e0ec;
+                border-radius: 7px;
+                font-size: 14px;
+                padding: 8px;
+            }
+            QTextEdit#CurrentBody {
+                background: #f0fbf3;
+                color: #1b5e20;
+                border: 2px solid #2e7d32;
+                border-radius: 7px;
+                font-size: 15px;
+                padding: 8px;
+                font-weight: 600;
             }
             QTextEdit, QPlainTextEdit, QLineEdit {
                 background: #ffffff;
@@ -706,10 +735,57 @@ class WizardOfOzApp(QMainWindow):
         main_layout.setContentsMargins(20, 18, 20, 16)
         main_layout.setSpacing(12)
 
-        self.line_text = QTextEdit()
-        self.line_text.setReadOnly(True)
-        self.line_text.setFixedHeight(150)
-        main_layout.addWidget(self.line_text)
+        three_col = QWidget()
+        three_col_layout = QHBoxLayout(three_col)
+        three_col_layout.setContentsMargins(0, 0, 0, 0)
+        three_col_layout.setSpacing(10)
+
+        prev_panel = QWidget()
+        prev_layout = QVBoxLayout(prev_panel)
+        prev_layout.setContentsMargins(0, 0, 0, 0)
+        prev_layout.setSpacing(4)
+        self.prev_header = QLabel()
+        self.prev_header.setObjectName("PanelHeader")
+        self.prev_header.setWordWrap(True)
+        self.prev_text = QTextEdit()
+        self.prev_text.setReadOnly(True)
+        self.prev_text.setObjectName("PanelBody")
+        self.prev_text.setFixedHeight(140)
+        prev_layout.addWidget(self.prev_header)
+        prev_layout.addWidget(self.prev_text)
+        three_col_layout.addWidget(prev_panel, 1)
+
+        curr_panel = QWidget()
+        curr_layout = QVBoxLayout(curr_panel)
+        curr_layout.setContentsMargins(0, 0, 0, 0)
+        curr_layout.setSpacing(4)
+        self.curr_header = QLabel()
+        self.curr_header.setObjectName("CurrentHeader")
+        self.curr_header.setWordWrap(True)
+        self.curr_text = QTextEdit()
+        self.curr_text.setReadOnly(True)
+        self.curr_text.setObjectName("CurrentBody")
+        self.curr_text.setFixedHeight(140)
+        curr_layout.addWidget(self.curr_header)
+        curr_layout.addWidget(self.curr_text)
+        three_col_layout.addWidget(curr_panel, 1)
+
+        next_panel = QWidget()
+        next_layout = QVBoxLayout(next_panel)
+        next_layout.setContentsMargins(0, 0, 0, 0)
+        next_layout.setSpacing(4)
+        self.next_header = QLabel()
+        self.next_header.setObjectName("PanelHeader")
+        self.next_header.setWordWrap(True)
+        self.next_text = QTextEdit()
+        self.next_text.setReadOnly(True)
+        self.next_text.setObjectName("PanelBody")
+        self.next_text.setFixedHeight(140)
+        next_layout.addWidget(self.next_header)
+        next_layout.addWidget(self.next_text)
+        three_col_layout.addWidget(next_panel, 1)
+
+        main_layout.addWidget(three_col)
 
         self.note_label = QLabel()
         self.note_label.setObjectName("Note")
@@ -765,7 +841,7 @@ class WizardOfOzApp(QMainWindow):
         for column in range(5):
             self.schedule_table.horizontalHeader().setSectionResizeMode(column, QHeaderView.Stretch)
         schedule_layout.addWidget(self.schedule_table, stretch=1)
-        body_layout.addWidget(schedule_frame, stretch=0)
+        body_layout.addWidget(schedule_frame, stretch=3)
         schedule_frame.setMinimumWidth(420)
 
         log_frame = self._panel()
@@ -778,7 +854,7 @@ class WizardOfOzApp(QMainWindow):
         self.log_text = QPlainTextEdit()
         self.log_text.setReadOnly(True)
         log_layout.addWidget(self.log_text, stretch=1)
-        body_layout.addWidget(log_frame, stretch=1)
+        body_layout.addWidget(log_frame, stretch=2)
         root.addWidget(body, stretch=1)
 
         footer = QFrame()
@@ -809,9 +885,6 @@ class WizardOfOzApp(QMainWindow):
         if self.step_index >= len(self.steps):
             return None
         return self.steps[self.step_index]
-
-    def _set_line_text(self, text):
-        self.line_text.setPlainText(text)
 
     def _update_schedule(self):
         for row, plan in enumerate(self.round_plans):
@@ -845,15 +918,29 @@ class WizardOfOzApp(QMainWindow):
         if step is None:
             self.phase_label.setText("Session Complete")
             self.title_label.setText("All scripted steps are complete")
-            self._set_line_text("No remaining Misty lines.")
             self.note_label.setText("RA1 may re-enter and assist with the final survey.")
             self.next_button.setEnabled(False)
         else:
             self.phase_label.setText(step.phase)
             self.title_label.setText(step.title)
-            self._set_line_text(step.misty_line if step.misty_line.strip() else "[Gesture only: no speech]")
             self.note_label.setText(step.operator_note)
             self.next_button.setEnabled(True)
+
+        prev_step = self.steps[self.step_index - 2] if self.step_index >= 2 else None
+        curr_step = self.steps[self.step_index - 1] if self.step_index >= 1 else None
+        next_step = self.steps[self.step_index] if self.step_index < total_steps else None
+
+        def _format_speech(s):
+            if s is None:
+                return ""
+            return s.misty_line if s.misty_line.strip() else "[Gesture only: no speech]"
+
+        self.prev_header.setText(f"Previous · {prev_step.title}" if prev_step else "Previous · (none)")
+        self.prev_text.setPlainText(_format_speech(prev_step))
+        self.curr_header.setText(f"Now Reading · {curr_step.title}" if curr_step else "Now Reading · (not started)")
+        self.curr_text.setPlainText(_format_speech(curr_step))
+        self.next_header.setText(f"Next · {next_step.title}" if next_step else "Next · (session complete)")
+        self.next_text.setPlainText(_format_speech(next_step))
 
         self.replay_button.setEnabled(self.step_index > 0)
         self.back_button.setEnabled(self.step_index > 0)
