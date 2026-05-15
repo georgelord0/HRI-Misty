@@ -461,14 +461,14 @@ def make_protocol_steps(controller, round_plans):
     ]
 
     for plan in round_plans:
-        is_last_round = plan.round_number == TOTAL_ROUNDS
+        prefix = "" if plan.round_number == 1 else "Thank you. "
         steps.extend(
             [
                 ProtocolStep(
                     phase="Phase 7: Pattern-Matching Task",
                     title=f"Round {plan.round_number}: turn to question",
                     misty_line=(
-                        f"Let's start Round {plan.round_number}. "
+                        f"{prefix}Let's start Round {plan.round_number}. "
                         f"Please turn to Question {plan.round_number}."
                     ),
                     before_speech=controller.listening_behavior,
@@ -492,16 +492,6 @@ def make_protocol_steps(controller, round_plans):
                 ),
             ]
         )
-        if not is_last_round:
-            steps.append(
-                ProtocolStep(
-                    phase="Phase 7: Pattern-Matching Task",
-                    title=f"Round {plan.round_number}: acknowledge selection",
-                    misty_line="Thank you. Let's move to the next question.",
-                    before_speech=controller.listening_behavior,
-                    operator_note="Trigger after the participant selects an answer.",
-                )
-            )
 
     steps.append(
         ProtocolStep(
