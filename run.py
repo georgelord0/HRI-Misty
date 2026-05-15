@@ -334,6 +334,9 @@ class MistyController:
         self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
         time.sleep(1)
 
+    def wait_for_touch_behavior(self):
+        self.change_led(255, 180, 0)
+
     def listening_behavior(self):
         self.display_image(FACE_JOY)
         self.change_led(0, 180, 80)
@@ -477,6 +480,7 @@ def make_protocol_steps(controller, round_plans):
                         f"my choice is {plan.misty_choice}."
                     ),
                     before_speech=controller.answer_behavior,
+                    after_speech=controller.wait_for_touch_behavior,
                     operator_note=(
                         f"Protocol: Misty is {plan.outcome_label}. "
                         f"Correct option is {plan.correct_option}; Misty says {plan.misty_choice}."
