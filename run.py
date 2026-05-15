@@ -12,6 +12,11 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 try:
+    from mistyPy.Events import Events
+except ModuleNotFoundError:
+    Events = None
+
+try:
     from PySide6.QtCore import QTimer, Qt
     from PySide6.QtWidgets import (
         QApplication,
@@ -170,6 +175,9 @@ class DebugRobot:
 
     def set_text_display_settings(self, *args, **kwargs):
         print(f"[DEBUG Misty set_text_display_settings] {kwargs}")
+
+    def register_event(self, event_name=None, event_type=None, callback_function=None, keep_alive=None):
+        print(f"[DEBUG Misty register_event] {event_name}")
 
 
 class MistyController:
@@ -356,6 +364,22 @@ class MistyController:
         self.configure_blank_text_layer()
         self.display_text(" ", layer="woz-blank")
 
+    def register_head_front_touch(self, on_touch):
+        if Events is None:
+            self.log_queue.put("mistyPy.Events not available; head touch not registered.")
+            return
+
+        def callback(data):
+            if data.get("message", {}).get("sensorPosition") == "HeadFront":
+                on_touch()
+
+        self.robot.register_event(
+            event_name="participant_head_touch",
+            event_type=Events.TouchSensor,
+            callback_function=callback,
+            keep_alive=True,
+        )
+
     def stop_robot(self):
         for command_name in ("stop_speaking", "stop"):
             command = getattr(self.robot, command_name, None)
@@ -505,10 +529,12 @@ class WizardOfOzApp(QMainWindow):
         self.resize(1120, 760)
         self.setMinimumSize(920, 650)
 
+        self.head_touch_pending = False
         self._new_subject_plan()
         self._build_ui()
         self._update_ui()
         self.log_timer.start(100)
+        self.controller.register_head_front_touch(self._on_head_front_touch)
 
     def _new_subject_plan(self):
         self.subject_number += 1
@@ -828,6 +854,21 @@ class WizardOfOzApp(QMainWindow):
                 self._append_log(self.log_queue.get_nowait())
             except queue.Empty:
                 break
+        if self.head_touch_pending:
+            self.head_touch_pending = False
+            if self._is_waiting_for_answer():
+                self._append_log("Participant touched Misty's HeadFront → advancing step.")
+                self.trigger_next_step()
+            else:
+                self._append_log("HeadFront touched but ignored (not at answering step).")
+
+    def _is_waiting_for_answer(self):
+        if not 0 < self.step_index <= len(self.steps):
+            return False
+        return self.steps[self.step_index - 1].title.endswith("Misty suggestion")
+
+    def _on_head_front_touch(self):
+        self.head_touch_pending = True
 
     def closeEvent(self, event):
         self.log_timer.stop()
