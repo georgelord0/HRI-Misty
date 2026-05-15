@@ -451,6 +451,8 @@ def make_protocol_steps(controller, round_plans):
             misty_line=(
                 "Your job is to pick the piece that best completes the pattern from the options shown. "
                 "I'll give you my suggestion first, and then you'll make the final decision. "
+                "When my light turns yellow, that means I'm waiting for you. "
+                "Once you've decided, please use the pen on the table to circle your answer on the sheet, then gently touch my forehead to continue. "
                 "Ready to start?"
             ),
             before_speech=controller.explain_board_behavior,
@@ -477,7 +479,9 @@ def make_protocol_steps(controller, round_plans):
                     title=f"Round {plan.round_number}: Misty suggestion",
                     misty_line=(
                         f"For this question, question {plan.round_number}, "
-                        f"my choice is {plan.misty_choice}."
+                        f"my choice is {plan.misty_choice}. "
+                        f"Take a moment to think, circle your final answer on the sheet, "
+                        f"then touch my forehead to continue."
                     ),
                     before_speech=controller.answer_behavior,
                     after_speech=controller.wait_for_touch_behavior,
