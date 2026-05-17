@@ -422,21 +422,21 @@ def make_protocol_steps(controller, round_plans):
         ProtocolStep(
             phase="Phase 6: Misty Warm-Up",
             title="Greeting and warm-up behavior",
-            misty_line="Hello! I'm Misty. It's nice to meet you today.",
+            misty_line="Hello! I'm Misty. I'm a robot with lots of capabilities",
             before_speech=controller.warmup_greeting_behavior,
             operator_note="Trigger after RA1 leaves the room.",
         ),
         ProtocolStep(
             phase="Phase 6: Misty Warm-Up",
             title="Ask participant name",
-            misty_line="Before we start, I'd like to ask you a couple of questions. What's your name?",
+            misty_line="What's your name?",
             before_speech=controller.listening_behavior,
             operator_note="Wait for the participant to answer, then trigger the next step regardless of content.",
         ),
         ProtocolStep(
             phase="Phase 6: Misty Warm-Up",
             title="Ask prior robot interaction",
-            misty_line="Nice to meet you. Have you often interacted with a robot before?",
+            misty_line="It's very nice to meet you. Have you ever interacted with a robot before?",
             before_speech=controller.listening_behavior,
             operator_note="Wait for the participant to answer, then trigger the game explanation.",
         ),
@@ -444,8 +444,9 @@ def make_protocol_steps(controller, round_plans):
             phase="Phase 6: Misty Warm-Up",
             title="Explain task: game setup",
             misty_line=(
-                "Sounds good. Now, we're going to play a pattern-matching game together. "
-                "I'll explain the rules, and then we'll play eight rounds."
+                "Oh, I see. That's great! Today, you're going to be interacting with me while we play a pattern-matching game together. "
+                "During the course of the game, feel free to make remarks to me, and I will respond."
+                "First, I'll explain the rules."
             ),
             before_speech=controller.listening_behavior,
             operator_note="Trigger the board gesture next.",
@@ -454,7 +455,7 @@ def make_protocol_steps(controller, round_plans):
             phase="Phase 6: Misty Warm-Up",
             title="Explain task: game materials",
             misty_line=(
-                "For each round, you'll see a pattern with one piece missing. "
+                "The game will proceed in eight rounds. For each round, you'll see a pattern with one piece missing. "
             ),
             before_speech=controller.listening_behavior,
             operator_note="Trigger the next step after the board explanation gesture is complete."
@@ -464,10 +465,10 @@ def make_protocol_steps(controller, round_plans):
             title="Explain task: rules and readiness - Part 2",
             misty_line=(
                 "Your job is to pick the piece that best completes the pattern from the options shown. "
-                "I'll give you my suggestion first, and then you'll make the final decision. "
+                "First, I'll give you my suggestion to try to solve the board, and then you'll think about it and make the final decision. "
                 "When my light turns yellow, that means I'm waiting for you. "
                 "Once you've decided, please use the pen on the table to circle your answer on the sheet, then gently touch my forehead to continue. "
-                "Ready to start?"
+                "Are you ready to start?"
             ),
             before_speech=controller.explain_board_behavior,
             operator_note="Wait for the participant to confirm readiness.",
@@ -482,8 +483,7 @@ def make_protocol_steps(controller, round_plans):
                     phase="Phase 7: Pattern-Matching Task",
                     title=f"Round {plan.round_number}: turn to question",
                     misty_line=(
-                        f"{prefix}Let's start Round {plan.round_number}. "
-                        f"Please turn to Question {plan.round_number}."
+                        f"{prefix}Great! Now let's start Round {plan.round_number}. "
                     ),
                     before_speech=(
                         controller.listening_behavior
@@ -517,7 +517,7 @@ def make_protocol_steps(controller, round_plans):
             title="Final survey handoff",
             misty_line=(
                 "That was our last round. Thank you for playing with me. "
-                "There's one more survey for you to complete. Please wait for assistance."
+                "The experimenter will return soon. Please wait for assistance."
             ),
             before_speech=controller.final_behavior,
             after_speech=controller.finish_shutdown_behavior,
