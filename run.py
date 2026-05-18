@@ -66,7 +66,7 @@ FACE_THINKING = "e_Amazement.jpg"
 FACE_DEFAULT = "e_DefaultContent.jpg"
 
 # Misty's default speech/audio volume, 0-100. Lower this for quieter study rooms.
-MISTY_VOLUME = 50
+MISTY_VOLUME = 10
 
 # Wait this long after the final handoff line before blanking Misty's face and LED.
 FINAL_SHUTDOWN_DELAY_SECONDS = 8.0
@@ -184,6 +184,7 @@ class MistyController:
     def __init__(self, robot, log_queue):
         self.robot = robot
         self.log_queue = log_queue
+        self._waiting_for_answer = False
 
     def run_async(self, label, action):
         thread = threading.Thread(target=self._run_action, args=(label, action), daemon=True)
@@ -216,7 +217,7 @@ class MistyController:
         response = self.robot.speak(
             text=text,
             pitch=None,
-            speechRate=None,
+            speechRate=0.9,
             voice=None,
             flush=True,
             utteranceId=f"woz-{int(time.time() * 1000)}",
@@ -305,7 +306,7 @@ class MistyController:
     def warmup_greeting_behavior(self):
         self.display_image(FACE_JOY)
         self.change_led(0, 180, 80)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=90)
         self.move_arms(left=-40, right=40, velocity=65)
         time.sleep(0.5)
         self.move_arms(left=40, right=-40, velocity=65)
@@ -313,14 +314,14 @@ class MistyController:
         self.move_arms(left=-40, right=40, velocity=65)
         time.sleep(0.5)
         self.move_arms(left=80, right=80, velocity=60)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=90)
         time.sleep(0.5)
         self.change_led(70, 120, 255)
-        self.move_head(pitch=-5, roll=0, yaw=25, velocity=100)
+        self.move_head(pitch=-5, roll=0, yaw=25, velocity=90)
         time.sleep(0.5)
-        self.move_head(pitch=-5, roll=0, yaw=-25, velocity=100)
+        self.move_head(pitch=-5, roll=0, yaw=-25, velocity=90)
         time.sleep(0.5)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=90)
 
     def thinking_behavior(self):
         self.display_image(FACE_THINKING)
@@ -329,29 +330,34 @@ class MistyController:
     def answer_behavior(self):
         self.display_image(FACE_THINKING)
         self.change_led(40, 120, 255)
-        self.move_head(pitch=40, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=15, roll=0, yaw=0, velocity=90)
+        self.move_arms(left=0, right=0, velocity=75)
         time.sleep(2)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=90)
+        self.move_arms(left=80, right=80, velocity=75)
         time.sleep(1)
 
     def wait_for_touch_behavior(self):
-        self.change_led(255, 180, 0)
+        self._waiting_for_answer = True
 
     def listening_behavior(self):
+        self._waiting_for_answer = False
         self.display_image(FACE_JOY)
         self.change_led(0, 180, 80)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=90)
 
     def _nod(self):
-        self.move_head(pitch=26, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=26, roll=0, yaw=0, velocity=75)
         time.sleep(0.35)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=75)
         time.sleep(0.35)
-        self.move_head(pitch=26, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=26, roll=0, yaw=0, velocity=75)
         time.sleep(0.35)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=75)
+        time.sleep(0.35)
 
     def acknowledge_behavior(self):
+        self._waiting_for_answer = False
         self.display_image(FACE_JOY)
         self.change_led(0, 180, 80)
         self._nod()
@@ -359,14 +365,15 @@ class MistyController:
     def explain_board_behavior(self):
         self.display_image(FACE_JOY)
         self.change_led(0, 180, 80)
-        self.move_head(pitch=40, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=40, roll=0, yaw=0, velocity=90)
         self.move_arms(left=0, right=0, velocity=100)
         time.sleep(1.6)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=90)
         self.move_arms(left=80, right=80, velocity=100)
         time.sleep(0.9)
 
     def final_behavior(self):
+        self._waiting_for_answer = False
         self.display_image(FACE_DEFAULT)
         self.change_led(90, 90, 255)
         self._nod()
@@ -374,25 +381,40 @@ class MistyController:
 
     def finish_shutdown_behavior(self):
         time.sleep(FINAL_SHUTDOWN_DELAY_SECONDS)
-        self.move_head(pitch=0, roll=0, yaw=0, velocity=100)
+        self.move_head(pitch=0, roll=0, yaw=0, velocity=90)
         self.move_arms(left=80, right=80, velocity=100)
         self.change_led(0, 0, 0)
         self.hide_image_layer()
         self.configure_blank_text_layer()
         self.display_text(" ", layer="woz-blank")
 
-    def register_head_front_touch(self, on_touch):
+    def register_capacitive_touch(self, on_touch):
         if Events is None:
-            self.log_queue.put("mistyPy.Events not available; head touch not registered.")
+            self.log_queue.put("mistyPy.Events not available; capacitive touch not registered.")
             return
 
         def callback(data):
-            if data.get("message", {}).get("sensorPosition") == "HeadFront":
-                on_touch()
+            on_touch()
 
         self.robot.register_event(
-            event_name="participant_head_touch",
+            event_name="participant_touch",
             event_type=Events.TouchSensor,
+            callback_function=callback,
+            keep_alive=True,
+        )
+
+    def register_speech_complete(self):
+        if Events is None:
+            self.log_queue.put("mistyPy.Events not available; speech complete not registered.")
+            return
+
+        def callback(data):
+            if self._waiting_for_answer:
+                self.change_led(255, 180, 0)
+
+        self.robot.register_event(
+            event_name="speech_complete",
+            event_type=Events.TextToSpeechComplete,
             callback_function=callback,
             keep_alive=True,
         )
@@ -445,7 +467,7 @@ def make_protocol_steps(controller, round_plans):
             title="Explain task: game setup",
             misty_line=(
                 "Oh, I see. That's great! Today, you're going to be interacting with me while we play a pattern-matching game together. "
-                "During the course of the game, feel free to make remarks to me, and I will respond."
+                "During the course of the game, feel free to make remarks to me, and I will respond. "
                 "First, I'll explain the rules."
             ),
             before_speech=controller.listening_behavior,
@@ -467,7 +489,7 @@ def make_protocol_steps(controller, round_plans):
                 "Your job is to pick the piece that best completes the pattern from the options shown. "
                 "First, I'll give you my suggestion to try to solve the board, and then you'll think about it and make the final decision. "
                 "When my light turns yellow, that means I'm waiting for you. "
-                "Once you've decided, please use the pen on the table to circle your answer on the sheet, then gently touch my forehead to continue. "
+                "Once you've decided, please use the pen on the table to circle your answer on the sheet, then gently touch the top of my head to continue. "
                 "Are you ready to start?"
             ),
             before_speech=controller.explain_board_behavior,
@@ -499,7 +521,7 @@ def make_protocol_steps(controller, round_plans):
                         f"For this question, question {plan.round_number}, "
                         f"my choice is {plan.misty_choice}. "
                         f"Take a moment to think, circle your final answer on the sheet, "
-                        f"then touch my forehead to continue."
+                        f"then touch the top of my head to continue."
                     ),
                     before_speech=controller.answer_behavior,
                     after_speech=controller.wait_for_touch_behavior,
@@ -545,12 +567,13 @@ class WizardOfOzApp(QMainWindow):
         self.resize(1120, 900)
         self.setMinimumSize(920, 800)
 
-        self.head_touch_pending = False
+        self.touch_pending = False
         self._new_subject_plan()
         self._build_ui()
         self._update_ui()
         self.log_timer.start(100)
-        self.controller.register_head_front_touch(self._on_head_front_touch)
+        self.controller.register_capacitive_touch(self._on_capacitive_touch)
+        self.controller.register_speech_complete()
 
     def _new_subject_plan(self):
         self.subject_number += 1
@@ -957,29 +980,39 @@ class WizardOfOzApp(QMainWindow):
                 self._append_log(self.log_queue.get_nowait())
             except queue.Empty:
                 break
-        if self.head_touch_pending:
-            self.head_touch_pending = False
+        if self.touch_pending:
+            self.touch_pending = False
             if self._is_waiting_for_answer():
-                self._append_log("Participant touched Misty's HeadFront → advancing step.")
+                self._append_log("Participant touched Misty → advancing step.")
                 self.trigger_next_step()
             else:
-                self._append_log("HeadFront touched but ignored (not at answering step).")
+                self._append_log("Touch ignored (not at answering step).")
 
     def _is_waiting_for_answer(self):
         if not 0 < self.step_index <= len(self.steps):
             return False
         return self.steps[self.step_index - 1].title.endswith("Misty suggestion")
 
-    def _on_head_front_touch(self):
+    def _on_capacitive_touch(self):
         if not self._is_waiting_for_answer():
-            self.head_touch_pending = True
+            self.touch_pending = True
             return
         threading.Thread(target=self._flash_then_advance, daemon=True).start()
 
     def _flash_then_advance(self):
+        self.controller._waiting_for_answer = False
         self.controller.change_led(255, 255, 255)
-        time.sleep(1.5)
-        self.head_touch_pending = True
+        self.controller.move_arms(left=-40, right=40, velocity=90)
+        time.sleep(0.35)
+        self.controller.move_arms(left=40, right=-40, velocity=90)
+        time.sleep(0.35)
+        self.controller.move_arms(left=-40, right=40, velocity=90)
+        time.sleep(0.35)
+        self.controller.move_arms(left=40, right=-40, velocity=90)
+        time.sleep(0.35)
+        self.controller.move_arms(left=80, right=80, velocity=90)
+        time.sleep(0.35)
+        self.touch_pending = True
 
     def closeEvent(self, event):
         self.log_timer.stop()
